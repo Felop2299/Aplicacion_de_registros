@@ -13,6 +13,7 @@ from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 
+
 # from models import Person
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
@@ -29,9 +30,28 @@ print(f"DEBUG ENV (FLASK_DEBUG): {os.getenv('FLASK_DEBUG')}")
 
 print(f"FRONTEND_URL from .env: {os.getenv('FRONTEND_URL')}")
 print(f"BACKEND_URL from .env: {os.getenv('BACKEND_URL')}")
+frontend_url = os.getenv('FRONTEND_URL')
+github_url = "https://fantastic-spoon-4jwjxp7x4j7wcj4xj-3000.app.github.dev"
 
-CORS(app)
+if ENV == "development":
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        github_url,
+        frontend_url
+    ]
+    # Filtra valores None
+    allowed_origins = [origin for origin in allowed_origins if origin is not None]
+else:
+    allowed_origins = [frontend_url] if frontend_url else []
+CORS(app, 
+     resources={r"/api/*": {"origins": allowed_origins}},
+     supports_credentials=True,
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'Access-Control-Allow-Origin']
+)
 
+print(f"CORS configured for origins: {allowed_origins}")
 print("CORS has been initialized successfully for the entire app!")
 print("---------------------------------")
 # database condiguration

@@ -6,13 +6,13 @@ from api.models import db, User
 from flask_jwt_extended import create_access_token,jwt_required,get_jwt_identity
 from werkzeug.security import generate_password_hash,check_password_hash
 from api.utils import generate_sitemap, APIException
-from flask_cors import CORS
+
 from datetime import datetime,timedelta
 
 api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
-CORS(api)
+
 
 
 @api.route('/hello', methods=['POST', 'GET'])
@@ -27,8 +27,14 @@ def handle_hello():
 @api.route("/register", methods=["POST"])
 def register():
     print("Recibida solicitud a /register")
+    print("Request Headers:", request.headers) 
     try:
         data=request.get_json()
+        if data is None: 
+            print("Error: No se recibieron datos JSON o el Content-Type es incorrecto.")
+            return jsonify({"error": "Contenido de solicitud inválido o no JSON"}), 400
+
+        print(f"Received JSON data: {data}")
         full_name=data.get("full_name")
         email=data.get("email")
         password=data.get("password")
@@ -53,7 +59,8 @@ def register():
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error"})
+        print("Error en el registro:",str(e))
+        return jsonify({"error":"Error en el registro"}),500
     
 @api.route("/login",methods=["POST"])
 def login():

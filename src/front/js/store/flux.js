@@ -1,5 +1,6 @@
 const getState = ({ getStore, getActions, setStore }) => {
-	const API_URL = process.env.BACKEND_URL;
+	const API_URL = process.env.REACT_APP_BACKEND_URL || "https://fantastic-spoon-4jwjxp7x4j7wcj4xj-3001.app.github.dev";
+	
 	return {
 		store: {
 			user: null,
@@ -11,7 +12,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
 			registerUser:async(full_name,email,password)=>{
 				try{
-					const resp = await fetch(`${API_URL}/register`,{
+					const resp = await fetch(`${API_URL}/api/register`,{
 						method:"POST",
 						headers:{"Content-type":"application/json"},
 						body: JSON.stringify({full_name,email,password})
@@ -32,7 +33,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 			
 			loginUser:async(email,password)=>{
 				try{
-					const resp= await fetch(`${API_URL}/login`,{
+					const resp= await fetch(`${API_URL}/api/login`,{
 						method:"POST",
 						headers:{"Content-type":"application/json"},
 						body:JSON.stringify({email,password}),
@@ -53,7 +54,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
 			editProfile:async(full_name,current_password,new_password)=>{
 				try{
-					const resp=await fetch(`${API_URL}/profile`,{
+					const resp=await fetch(`${API_URL}/api/profile`,{
 						method:"PUT",
 						headers:{
 							"Content-type":"application/json",
@@ -75,7 +76,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					return{succes:false,message:"Requerimos de confirmacion para eliminar la cuenta"};
 				}
 				try{
-					const resp=await fetch(`${API_URL}/delete_account`,{
+					const resp=await fetch(`${API_URL}/api/delete_account`,{
 						method:"DELETE",
 						headers:{
 							"Content-Type":"application/json",
@@ -94,7 +95,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 			},
 			fetchUsers:async()=>{
 				try{
-					const resp=await fetch(`${API_URL}/users`, {
+					const resp=await fetch(`${API_URL}/api/users`, {
                         method: "GET",
                         headers: { "Authorization": `Bearer ${getStore().token}` },
                     });
