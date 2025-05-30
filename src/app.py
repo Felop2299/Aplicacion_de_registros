@@ -5,6 +5,8 @@ import os
 from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 from api.utils import APIException, generate_sitemap
 from api.models import db
 from api.routes import api
@@ -19,6 +21,19 @@ static_file_dir = os.path.join(os.path.dirname(
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
+
+print("---------------------------------")
+print("Flask app is starting in app.py...")
+print(f"Environment (ENV): {ENV}")
+print(f"DEBUG ENV (FLASK_DEBUG): {os.getenv('FLASK_DEBUG')}")
+
+print(f"FRONTEND_URL from .env: {os.getenv('FRONTEND_URL')}")
+print(f"BACKEND_URL from .env: {os.getenv('BACKEND_URL')}")
+
+CORS(app)
+
+print("CORS has been initialized successfully for the entire app!")
+print("---------------------------------")
 # database condiguration
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
@@ -31,6 +46,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
 
+
+app.config["JWT_SECRET_KEY"] = os.getenv("FLASK_APP_KEY")
+jwt = JWTManager(app)
 # add the admin
 setup_admin(app)
 

@@ -1,51 +1,127 @@
 const getState = ({ getStore, getActions, setStore }) => {
+	const API_URL = process.env.BACKEND_URL;
 	return {
 		store: {
-			message: null,
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			]
+			user: null,
+			usersList:[],
+			token:sessionStorage.getItem("token") || null,
+			
 		},
 		actions: {
-			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
-			},
 
-			getMessage: async () => {
+			registerUser:async(full_name,email,password)=>{
 				try{
-					// fetching data from the backend
-					const resp = await fetch(process.env.BACKEND_URL + "/api/hello")
-					const data = await resp.json()
-					setStore({ message: data.message })
-					// don't forget to return something, that is how the async resolves
-					return data;
+					const resp = await fetch(`${API_URL}/register`,{
+						method:"POST",
+						headers:{"Content-type":"application/json"},
+						body: JSON.stringify({full_name,email,password})
+					});
+
+					const data=await resp.json();
+					if(!resp.ok) throw new Error(data.error || data.msg);
+
+					getActions().setToken(data.token);
+					getActions().setUser(data.user);
+
+					return true;
 				}catch(error){
-					console.log("Error loading message from backend", error)
+					console.error("Error en la solicitud:",error.message);
+					return false;
 				}
 			},
-			changeColor: (index, color) => {
-				//get the store
-				const store = getStore();
+			
+			loginUser:async(email,password)=>{
+				try{
+					const resp= await fetch(`${API_URL}/login`,{
+						method:"POST",
+						headers:{"Content-type":"application/json"},
+						body:JSON.stringify({email,password}),
+					}); 
+					const data=await resp.json();
+					if(!resp.ok)throw new Error(data.error || "Credenciales invalidas");
 
-				//we have to loop the entire demo array to look for the respective index
-				//and change its color
-				const demo = store.demo.map((elm, i) => {
-					if (i === index) elm.background = color;
-					return elm;
-				});
+					getActions().setToken(data.token);
+					getActions().setUser(data.user);
 
-				//reset the global store
-				setStore({ demo: demo });
+					return true;
+				}catch(error){
+					console.error("Login error",error.message);
+					return false;
+				}
+			},
+
+
+			editProfile:async(full_name,current_password,new_password)=>{
+				try{
+					const resp=await fetch(`${API_URL}/profile`,{
+						method:"PUT",
+						headers:{
+							"Content-type":"application/json",
+							"Authorization":`Bearer ${getStore().token}`,
+						},
+						body:JSON.stringify({full_name,current_password,new_password}),
+					});
+					const data= await resp.json();
+					if(!resp.ok) throw new Error(data.error || "Error al editar perfil");
+					getActions().setUser(data.user);
+					return true;
+				}catch(error){
+					console.error("Error no se pudo editar el perfil:",error.message);
+					return false;
+				}
+			},
+			deleteAccount:async(password,confirm_delete)=>{
+				if (!confirm_delete){
+					return{succes:false,message:"Requerimos de confirmacion para eliminar la cuenta"};
+				}
+				try{
+					const resp=await fetch(`${API_URL}/delete_account`,{
+						method:"DELETE",
+						headers:{
+							"Content-Type":"application/json",
+							"Authorization":`Bearer ${getStore().token}`,
+						},
+						body:JSON.stringify({password,confirm_delete}),
+					});
+					const data=await resp.json();
+					if(!resp.ok)throw new Error(data.error || "Error al eliminar la cuenta");
+					getActions().logout();
+					return true;
+				}catch(error){
+					console.error("Error al eliminar la cuenta:",error.message);
+					return false;
+				}
+			},
+			fetchUsers:async()=>{
+				try{
+					const resp=await fetch(`${API_URL}/users`, {
+                        method: "GET",
+                        headers: { "Authorization": `Bearer ${getStore().token}` },
+                    });
+					const data=await resp.json();
+					if (!resp.ok) throw new Error("Error al obtener los usuarios");
+					setStore({usersList:data});
+				}catch(error){
+					console.error("Fetch error:",error.message);
+				}
+			},
+
+			setUser:(user)=>{
+				setStore({user});
+			},
+			setToken:(token)=>{
+				sessionStorage.setItem("token",token);
+				setStore({token});
+			},
+			syncTokenFromSession:()=>{
+				const token=sessionStorage.getItem("token");
+				if (token){
+					setStore({token});
+				}
+			},
+			logout:()=>{
+				sessionStorage.removeItem("token");
+				setStore({token:null,user:null});
 			}
 		}
 	};
